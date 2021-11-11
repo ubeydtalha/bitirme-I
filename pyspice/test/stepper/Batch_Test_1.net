@@ -1,0 +1,25 @@
+* D:\Ubeyd\Bitirme - 1\kod\genetik_algoritmalar\bitirme-I\pyspice\test\stepper\Batch_Test.asc
+V1 +V 0 5
+R1 N001 0 4k
+R2 OUT N001 2k
+V2 -V 0 -15
+V3 IN 0 SINE(0 1 3k 0 0 0)
+XU1 IN N001 +V -V OUT AD712
+.tran 1m
+.meas TRAN Vout_rms RMS V(OUT)
+.meas TRAN Vin_rms RMS V(IN)
+.meas TRAN gain PARAM Vout_rms/Vin_rms
+.param freq=10k
+* .step param run 1 3 1
+.meas Vout1m FIND V(OUT) AT 1m
+.meas TRAN period FIND time WHEN V(out)=0 RISE=1
+.param test_param3 = test_param2 + 1
+.param test_param1 = 12  test_param2=20
+.step dec param freq 10k 1Meg 10
+.lib ADI1.lib
+.PARAM res=0  ; Batch instruction
+.PARAM cap=0.0001  ; Batch instruction
+; Simulation settings
+.param run = 0
+.backanno
+.end

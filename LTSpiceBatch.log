@@ -1,0 +1,36 @@
+ERROR:SimCommander:Netlist file not found
+ERROR:SimCommander:Unable to create Netlist
+WARNING:sim1:Fri Oct 29 19:19:39 2021: Simulation Failed. Time elapsed 00:00:00:
+
+ERROR:SimCommander:Netlist file not found
+ERROR:SimCommander:Unable to create Netlist
+WARNING:sim1:Fri Oct 29 19:19:47 2021: Simulation Failed. Time elapsed 00:00:00:
+
+ERROR:SimCommander:Netlist file not found
+ERROR:SimCommander:Unable to create Netlist
+WARNING:sim1:Fri Oct 29 19:20:28 2021: Simulation Failed. Time elapsed 00:00:00:
+
+ERROR:SimCommander:Netlist file not found
+ERROR:SimCommander:Unable to create Netlist
+ERROR:SimCommander:line starting with 'R2' not found in netlist
+ERROR:SimCommander:Netlist file not found
+ERROR:SimCommander:Unable to create Netlist
+ERROR:SimCommander:line starting with 'R2' not found in netlist
+WARNING:sim1:Fri Oct 29 19:36:53 2021: Simulation Failed. Time elapsed 00:00:00:
+
+WARNING:sim4:Fri Oct 29 19:36:53 2021: Simulation Failed. Time elapsed 00:00:00:
+
+WARNING:sim2:Fri Oct 29 19:36:53 2021: Simulation Failed. Time elapsed 00:00:00:
+
+WARNING:sim3:Fri Oct 29 19:36:53 2021: Simulation Failed. Time elapsed 00:00:00:
+
+WARNING:sim5:Fri Oct 29 19:36:54 2021: Simulation Failed. Time elapsed 00:00:00:
+
+ERROR:SimCommander:Netlist file not found
+ERROR:SimCommander:Unable to create Netlist
+WARNING:sim1:Fri Oct 29 19:54:24 2021: Simulation Failed. Time elapsed 00:00:00:
+
+ERROR:SimCommander:Netlist file not found
+ERROR:SimCommander:Unable to create Netlist
+WARNING:sim1:Fri Oct 29 19:55:21 2021: Simulation Failed. Time elapsed 00:00:00:
+
