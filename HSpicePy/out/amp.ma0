@@ -1,0 +1,4 @@
+DATA1 SOURCE='HSPICERF' VERSION='A-2008.03'
+.TITLE '**aaaa'
+ bw gain himg hreal temper alter#
+  6.837526e+007	  3.329107e+001	  -9.538945e-001	  -3.001290e-001	     25.000000 1

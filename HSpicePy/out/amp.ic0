@@ -1,0 +1,22 @@
+* "simulator" "HSPICERF"
+* "version" "A-2008.03"
+* "format" "HSP"
+* "rundate" "21:22:23  11/11/2021"
+* "netlist" "D:\Ubeyd\Bitirme - 1\kod\genetik_algoritmalar\bitirme-I\HSpicePy\amp.sp"
+* "runtitle" "**aaaa"
+* time = 0
+* temperature = 25
+*** BEGIN: Saved Operating Point ***
+.option
++ gmindc= 1e-012
+.nodeset
++ 1 = 1.2000000000
++ 2 = 712.4150526084m
++ 3 = 995.8649107142m
++ 4 = 550.0000000000m
++ 5 = 550.0000000000m
++ 6 = 254.4139510896m
++ 7 = 254.4139518106m
++ 8 = 0.0000000000
++ 1000 = 376.2268348000p
+*** END: Saved Operating Point ***
