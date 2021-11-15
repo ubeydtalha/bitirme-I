@@ -152,7 +152,7 @@ class HSpicePy(object):
                                 if table_line_number == 0:
                                     params = list(filter(None, line.split("|")))
                                     
-                                    tables_[params[0]] = {key.strip() :{} for key in params[1:]}
+                                    tables_[params[0].strip()] = {key.strip() :{} for key in params[1:]}
                                     
                                 if table_line_number > 1:
                                     variables = list(filter(None, line.split("|")))
@@ -160,7 +160,7 @@ class HSpicePy(object):
                                     variables = variables[1:]
                                     i = 0
                                     for key in params[1:]:
-                                        tables_[params[0]][key.strip()][variable_name] = variables[i].strip()
+                                        tables_[params[0].strip()][key.strip()][variable_name] = variables[i].strip()
                                         i+=0
                                 table_line_number += 1
                     devamke = False
@@ -199,7 +199,9 @@ class HSpicePy(object):
             variables = lines[-2]
             results = lines[-1]
             res = {variable:result for variable,result in zip(variables.split(),results.split())}
-            
+            if self.save_output:
+                with open(f"{self.path}\\out\\{file_name[:-3]}_ma0.json","w") as outfile:
+                    json.dump(res, outfile)   
             self.__result = res
         except Exception as e:
             print(e)

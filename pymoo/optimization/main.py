@@ -10,7 +10,7 @@ from pymoo.factory import get_problem, get_visualization, get_reference_directio
 from pymoo.optimize import minimize
 from pymoo.optimize import minimize
 from pymoo.factory import get_termination
-
+from pymoo.visualization.scatter import Scatter
 class MyProblem(ElementwiseProblem):
 
     def __init__(self):
@@ -49,12 +49,12 @@ problem = MyProblem()
 
 ref_dirs =  get_reference_directions(
     "multi-layer",
-    get_reference_directions("das-dennis", 2, n_partitions=50, scaling=0.5),
-    get_reference_directions("das-dennis", 2, n_partitions=50, scaling=0.5)
+    get_reference_directions("das-dennis", 2, n_partitions=100, scaling=1.5),
+    get_reference_directions("das-dennis", 2, n_partitions=100, scaling=0.5)
 )
 algorithm = MOEAD(
     ref_dirs,
-    n_neighbors=15, 
+    n_neighbors=7, 
     decomposition=get_decomposition("pbi", theta=5, eps=0),
     prob_neighbor_mating=0.7,
     sampling=get_sampling("real_random"), 
@@ -65,13 +65,28 @@ algorithm = MOEAD(
 
 res = minimize(problem,
                algorithm,
-               ('n_gen', 20),
+               ('n_gen', 50),
                seed=3878595,
                verbose=False,
-               return_least_infeasible=True,)
+               return_least_infeasible=False,
+               save_history=True
+               )
 
 
-get_visualization("scatter").add(res.F).show()
+plot = Scatter()
+plot.add(res.F, color="red")
+plot.show()
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+n_evals = np.array([e.evaluator.n_eval for e in res.history])
+opt = np.array([e.opt[0].F for e in res.history])
+
+plt.title("Convergence")
+plt.plot(n_evals, opt, "--")
+plt.yscale("log")
+plt.show()
 
 # algorithm = NSGA2(
 #     pop_size=100,

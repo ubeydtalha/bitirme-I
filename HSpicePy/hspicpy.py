@@ -11,11 +11,7 @@ Kütüphaneyi kullanmadan önce hspice programının path edildiğinden emin olu
 import os , time , json , asyncio
 import re
 import subprocess
-import itertools
 
-class Result(object):
-    def __init__(self, *args, **kwargs):
-        self.__dict__.update(kwargs)
 
 def timeit(method):
     def timed(*args, **kw):
@@ -87,11 +83,6 @@ class HSpicePy(object):
         """
         Changes the parameters in the cir file.
         """
-        # with open(f"{self.path}/{file_name}","r") as file:
-        #     data = file.read()
-        #     for key,value in self.parameters_dict.items():
-        #         data = data.replace(key,value)
-        
         params = ".PARAM\n"+"".join(f"+ {key} = {value}\n"for key,value in kwargs.items())
         with open(f"{self.path}\\{self.design_file_name}.cir","w+") as file:
             file.write(params)
@@ -142,7 +133,7 @@ class HSpicePy(object):
 
                 if new_table:
                     if table_line_number == 0:
-                        params = list(filter(None, line.split("|")))
+                        params = list(map(lambda x : x.strip(), list(filter(None, line.split("|")))))
                         
                         tables_[params[0]] = {key.strip() :{} for key in params[1:]}
                         
@@ -156,7 +147,7 @@ class HSpicePy(object):
                             i+=0
                     table_line_number += 1
         if self.save_output:
-            with open(f"{self.path}\\out\\{file_name[:-3]}_dp0.json","w") as outfile:
+            with open(f"{self.path}\\out\\{file_name[:-4]}_dp0.json","w") as outfile:
                 json.dump(tables_, outfile)       
         self.__operation_point_result = tables_
         # print(tables_)            
@@ -166,8 +157,7 @@ class HSpicePy(object):
         TR
         -
         Simülasyon oluşturulduktan sonra oluşan .ma0 dosyasını okur ve çıktıları kaydeder.
-        var = [bw,gain , hreal]
-        res = [7,3,-9]
+        
         """
         file_name = self.file_name + ".ma0"
         with open(f"{self.path}\\out\\{file_name}","r") as ma0:
@@ -177,7 +167,9 @@ class HSpicePy(object):
         variables = lines[-2]
         results = lines[-1]
         res = {variable:result for variable,result in zip(variables.split(),results.split())}
-        
+        if self.save_output:
+            with open(f"{self.path}\\out\\{file_name[:-3]}_ma0.json","w") as outfile:
+                json.dump(res, outfile)
         self.__result = res
 
 
@@ -186,9 +178,10 @@ class HSpicePy(object):
     def run(self):
         try:
             file_name = self.file_name if ".sp" in self.file_name else self.file_name+".sp"
-            
+            os.makedirs(self.path+f"\\out", exist_ok=True) 
             subprocess.run([r'hspicerf', f"{self.path}\\{file_name}"],cwd=self.path+f"\\out")
             # os.system(f"hspicerf -ahv {self.path}//{file_name} {self.path}//output")   ,f" > "
+
             self.__get_ma0_log()
             self.__get_dp0_log()
         except Exception as e:
@@ -206,30 +199,30 @@ class HSpicePy(object):
             pass     
         
         
-#Set-ExecutionPolicy Unrestricted
+
 
 
 meAbsPath = os.path.dirname(os.path.realpath(__file__))
 h = HSpicePy(file_name="amp",design_file_name="designparam",path=meAbsPath,timeout="")
 
-# h.run()
+h.run()
 
-# print(h.result)
-h.change_parameters_to_cir(
-                            LM1=1.0092e-06,
-                            LM2 = 1.4842e-06,
-                            LM3 = 1.5565e-06,
-                            WM1 = 2.1734e-05,
-                            WM2 = 4.6268e-05,
-                            WM3 = 6.2646e-05,
-                            Rb = 10000,
-                            Vb = 0.55
-                            )
-asyncio.run(h.run_async())
 print(h.result)
-h.set_parameters(R1=1,R2=2,R3=3)
+# h.change_parameters_to_cir(
+#                             LM1=1.0092e-06,
+#                             LM2 = 1.4842e-06,
+#                             LM3 = 1.5565e-06,
+#                             WM1 = 2.1734e-05,
+#                             WM2 = 4.6268e-05,
+#                             WM3 = 6.2646e-05,
+#                             Rb = 10000,
+#                             Vb = 0.55
+#                             )
+# asyncio.run(h.run_async())
+# print(h.result)
+# h.set_parameters(R1=1,R2=2,R3=3)
 
 
-# h.get_parameters_from_cir((meAbsPath +"\d.cir"))
-# print(h.parameters_dict)
+# # h.get_parameters_from_cir((meAbsPath +"\d.cir"))
+# # print(h.parameters_dict)
 
