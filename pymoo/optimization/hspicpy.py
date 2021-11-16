@@ -53,7 +53,7 @@ class HSpicePy(object):
         self.parameters = None
         self.instructions = []
         self.save_output = save_output
-
+        self.__mt0_result = None
         self.__result = None
         self.__operation_point_result = None
     
@@ -110,6 +110,13 @@ class HSpicePy(object):
         Returns the result of the simulation.
         """
         return self.__operation_point_result
+
+    @property
+    def mt0_result(self):
+        """
+        Returns the result of the simulation.
+        """
+        return self.__mt0_result
 
     # @result.setter
     # def result(self,value):
@@ -207,7 +214,34 @@ class HSpicePy(object):
             print(e)
             self.__result = None
         
-
+    def __get_mt0_log(self):
+        """
+        TR
+        -
+        Simülasyon oluşturulduktan sonra oluşan .mt0 dosyasını okur ve çıktıları kaydeder.
+        var = [bw,gain , hreal]
+        res = [7,3,-9]
+        """
+        try: 
+                
+            file_name = self.file_name + ".mt0"
+            lines = None
+            while not lines:
+                with open(f"{self.path}\\out\\{file_name}","r") as mt0:
+                    # data = ma0.read()
+                    
+                    lines =  mt0.readlines()
+                    mt0.close()
+            variables = lines[-2]
+            results = lines[-1]
+            res = {variable:result for variable,result in zip(variables.split(),results.split())}
+            if self.save_output:
+                with open(f"{self.path}\\out\\{file_name[:-3]}_mt0.json","w") as outfile:
+                    json.dump(res, outfile)   
+            self.__mt0_result = res
+        except Exception as e:
+            print(e)
+            self.__mt0_result = None
 
     # @timeit
     def run(self):
@@ -219,6 +253,7 @@ class HSpicePy(object):
             # os.system(f"hspicerf -ahv {self.path}//{file_name} {self.path}//output")   ,f" > "
             self.__get_ma0_log()
             self.__get_dp0_log()
+            self.__get_mt0_log()
         except Exception as e:
             print(e)
             pass
@@ -226,11 +261,27 @@ class HSpicePy(object):
     async def run_async(self):
         try:
             file_name = self.file_name if ".sp" in self.file_name else self.file_name+".sp"
-            proc = await asyncio.create_subprocess_shell(f"hspicerf {self.path}\\{file_name}", cwd=self.path+f"\\out")
-            # stdout, stderr = asyncio.gather( proc.communicate())
+            # try:
+            #     proc = None
+            #     async def shell():
+            #         nonlocal proc
+            #         proc = await asyncio.create_subprocess_shell(f"hspicerf {self.path}\\{file_name}", cwd=self.path+f"\\out")
+                
+            #     await asyncio.wait_for(shell(),timeout=0.3)
+            #     proc.kill()
+            # # stdout, stderr = asyncio.gather( proc.communicate())
             
+                
+            # # await proc.kill()
+            # # await proc.terminate()
+            # except asyncio.TimeoutError:
+            #     await proc.kill()
+            proc = await asyncio.create_subprocess_shell(f"hspicerf {self.path}\\{file_name}", cwd=self.path+f"\\out")    
             self.__get_ma0_log()
             self.__get_dp0_log()
+            self.__get_mt0_log()
+
+            
         except Exception as e:
             print(e)
             pass    
@@ -239,24 +290,15 @@ class HSpicePy(object):
 #Set-ExecutionPolicy Unrestricted
 
 
-# meAbsPath = os.path.dirname(os.path.realpath(__file__))
-# h = HSpicePy(file_name="amp",design_file_name="designparam",path=meAbsPath,timeout="")
+meAbsPath = os.path.dirname(os.path.realpath(__file__))
+h = HSpicePy(file_name="amp",design_file_name="designparam",path=meAbsPath,timeout="")
 
-# h.run()
+
 
 # print(h.result)
-# h.change_parameters_to_cir(
-#                             LM1=1.0092e-06,
-#                             LM2 = 1.4842e-06,
-#                             LM3 = 1.5565e-06,
-#                             WM1 = 2.1734e-05,
-#                             WM2 = 4.6268e-05,
-#                             WM3 = 6.2646e-05,
-#                             Rb = 10000,
-#                             Vb = 0.55
-#                             )
-# h.run()
-# print(h.result)
+# loop = asyncio.get_event_loop()
+asyncio.run(h.run_async())
+print(h.result)
 # h.set_parameters(R1=1,R2=2,R3=3)
 
 

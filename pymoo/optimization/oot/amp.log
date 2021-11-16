@@ -1,0 +1,8 @@
+Questionable use of curly braces in ".meas ac gain max par({db(v(7))})"
+    Error: undefined symbol in: "[db](v(7))"
+Questionable use of curly braces in ".meas ac bw when par({db(v(7))})= 0"
+    Error: undefined symbol in: "[db](v(7))"
+Circuit: **aaaa
+
+Unknown MOS level: 53
+Unknown MOS level: 53
