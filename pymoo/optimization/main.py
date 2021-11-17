@@ -8,9 +8,10 @@ from pymoo.factory import get_sampling, get_crossover, get_mutation
 from pymoo.algorithms.moo.moead import MOEAD, ParallelMOEAD
 from pymoo.factory import get_problem, get_visualization, get_reference_directions , get_decomposition
 from pymoo.optimize import minimize
-from pymoo.optimize import minimize
+from pymoo.core.sampling import Sampling
 from pymoo.factory import get_termination
 from pymoo.visualization.scatter import Scatter
+from pymoo.core.repair import Repair
 class MyProblem(ElementwiseProblem):
 
     def __init__(self):
@@ -19,27 +20,33 @@ class MyProblem(ElementwiseProblem):
                          n_constr=0,
                          xl=np.array([.12e-06,.12e-06,.12e-06,0.16e-06,0.16e-06,0.16e-06,5000,0.4]),
                          xu=np.array([4.0e-06,4.0e-06,4.0e-06,200.0e-06,200.0e-06,200.0e-06,25000,0.8]))
+        meAbsPath = os.path.dirname(os.path.realpath(__file__))
+        self.h = HSpicePy(file_name="amp",design_file_name="designparam",path=meAbsPath,timeout="")
+
 
     def _evaluate(self, x, out, *args, **kwargs):
 
-        meAbsPath = os.path.dirname(os.path.realpath(__file__))
-        h = HSpicePy(file_name="amp",design_file_name="designparam",path=meAbsPath,timeout="")
-        h.change_parameters_to_cir( 
+        
+        self.h.change_parameters_to_cir( 
                                     LM1 = x[0], LM2 = x[1], LM3 = x[2],
                                     WM1 = x[3], WM2 = x[4], WM3 = x[5],
                                     Rb = x[6],Vb = x[7])
-        asyncio.run(h.run_async())
-        # h.run()
-        f1_ = h.result["bw"]
-        f2_ = h.result["gain"]
+        asyncio.run(self.h.run_async())
+        asyncio.run(asyncio.sleep(.08))
+        # self.h.run()
+        
 
-        himg = h.result["himg"]
-        hreal = h.result["hreal"]
-
-        zpower = h.mt0_result["zpower"]
-        zsarea = h.mt0_result["zsarea"]
+        
         
         try : 
+            f1_ = self.h.result["bw"]
+            f2_ = self.h.result["gain"]
+
+            himg = self.h.result["himg"]
+            hreal = self.h.result["hreal"]
+
+            zpower = self.h.mt0_result["zpower"]
+            zsarea = self.h.mt0_result["zsarea"]
 
             f1_ = float(f1_)
             f2_ = float(f2_)
@@ -52,8 +59,8 @@ class MyProblem(ElementwiseProblem):
             out["F"] = [np.inf, np.inf]
             
         else:
-            f1 = float(h.result["bw"])
-            f2 = -float(h.result["gain"])
+            f1 = float(self.h.result["bw"])
+            f2 = float(self.h.result["gain"])
             zpower = float(zpower)
             zsarea = float(zsarea)
             himg = float(himg)
@@ -70,28 +77,53 @@ class MyProblem(ElementwiseProblem):
                 pm = 10    
             
             if pm < 45 or zsarea > 1e-9 or zpower > 0.5e-3:
+                
                 out["F"] = [np.inf, np.inf]
             else:
                 out["F"] = [f1, f2]
             
+class Repair(Repair):
 
+    def _do(self, problem : ElementwiseProblem , pop, **kwargs):
+        
+
+        values = pop.get("X")
+        new_values = []
+        i = 0
+        for individual in values:
+            new_individual = []
+            # control = list(map(lambda x: True if isinstance(x,bool) else False,individual))
+            if str(individual.dtype) == "bool":
+                for lower,upper in zip(problem.xl,problem.xu):
+                    new_individual.append(np.random.uniform(lower,upper,1)[0])
+            else:
+                new_individual = individual
+            new_values.append(new_individual)
+            i+=0
+
+        pop.set("X", new_values)
+        return pop
+
+            
 
 problem = MyProblem()
 
 
 ref_dirs =  get_reference_directions(
     "multi-layer",
-    get_reference_directions("das-dennis", 2, n_partitions=50, scaling=1),
-    get_reference_directions("das-dennis", 2, n_partitions=50, scaling=0.5)
+    get_reference_directions("das-dennis", 2, n_partitions=100, scaling=1),
+    get_reference_directions("das-dennis", 2, n_partitions=100, scaling=0.5)
 )
 algorithm = MOEAD(
     ref_dirs,
-    n_neighbors=20, 
+    n_partitions=100,
+    n_neighbors=10, 
     decomposition=get_decomposition("pbi", theta=5, eps=0.5),
     prob_neighbor_mating=0.9,
     sampling=get_sampling("real_random"), 
     crossover=get_crossover("bin_ux", prob=0.9),
     mutation=get_mutation("bin_bitflip", prob=0.2), 
+    repair = Repair(),
     
 )
 
@@ -111,7 +143,7 @@ plot.add(res.F, color="red")
 # plot.add(res.F, plot_type="line", color="black", linewidth=2)
 plot.show()
 
-print(res.F)
+# print(res.F)
 # import numpy as np
 # import matplotlib.pyplot as plt
 
@@ -125,15 +157,16 @@ print(res.F)
 
 # algorithm = NSGA2(
 #     pop_size=100,
-#     n_offsprings=10,
+#     n_offsprings=100,
 #     sampling=get_sampling("real_random"),
 #     crossover=get_crossover("real_sbx", prob=0.9, eta=15),
 #     mutation=get_mutation("real_pm", eta=20),
-#     eliminate_duplicates=True
+#     eliminate_duplicates=True,
+#     repair = Repair(),
 # )
 
 
-# termination = get_termination("n_gen", 100)
+# termination = get_termination("n_gen", 10)
 
 
 # res = minimize(problem,
@@ -145,6 +178,11 @@ print(res.F)
 
 # X = res.X
 # F = res.F
+
+# plot = Scatter()
+# plot.add(res.F, color="red")
+# plot.show()
+# plot.add(res.F, plot_type="line", color="black", linewidth=2)
 
 # import matplotlib.pyplot as plt
 # xl, xu = problem.bounds()
