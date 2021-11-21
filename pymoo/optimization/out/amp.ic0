@@ -1,7 +1,7 @@
 * "simulator" "HSPICERF"
 * "version" "A-2008.03"
 * "format" "HSP"
-* "rundate" "23:34:09  11/17/2021"
+* "rundate" "22:14:47  11/21/2021"
 * "netlist" "D:\Ubeyd\Bitirme_1\kod\genetik_algoritmalar\bitirme_I\pymoo\optimization\amp.sp"
 * "runtitle" "**aaaa"
 * time = 0
@@ -11,12 +11,12 @@
 + gmindc= 1e-012
 .nodeset
 + 1 = 1.2000000000
-+ 2 = 731.5590383808m
-+ 3 = 1.0584844743
-+ 4 = 684.2750783988m
-+ 5 = 684.2750783988m
-+ 6 = 170.9056134248m
-+ 7 = 170.9056138983m
++ 2 = 704.0454461631m
++ 3 = 1.1987758942
++ 4 = 764.4287939805m
++ 5 = 764.4287939805m
++ 6 = 124.4637574673m
++ 7 = 124.4637790492m
 + 8 = 0.0000000000
-+ 1000 = 678.2879079750p
++ 1000 = 543.6545457984p
 *** END: Saved Operating Point ***

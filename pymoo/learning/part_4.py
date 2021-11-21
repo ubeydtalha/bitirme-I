@@ -48,7 +48,7 @@ class MyProblem(ElementwiseProblem):
 problem = MyProblem()
         
 #%% algorithm
-ref_dirs = get_reference_directions("das-dennis", 2, n_partitions=12)
+ref_dirs = get_reference_directions("das-dennis", 2, n_partitions=50)
 
 algorithm = MOEAD(
     ref_dirs,

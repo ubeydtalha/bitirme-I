@@ -28,6 +28,12 @@ RX 1000 0 1K
 .option post=1
 .option sim_mode = client/server
 .option OPFILE=1
+.OPTION HBTOL= 1e-4
+.OPTION HBMAXOSCITER= 5
+.option HBMAXITER= 5
+.OPTION SIM_SPEF_MAX_ITER = 5
+
+
 *.op
 .ac dec 100 100 10000000000
 .TRAN 2n 100n 

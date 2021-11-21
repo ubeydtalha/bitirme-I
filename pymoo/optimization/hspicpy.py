@@ -7,11 +7,14 @@ Kütüphaneyi kullanmadan önce hspice programının path edildiğinden emin olu
 
 """
 
+import signal
 
 import os , time , json , asyncio
 import re
 import subprocess
 import itertools
+import shlex 
+from subprocess import Popen, PIPE
 
 class Result(object):
     def __init__(self, *args, **kwargs):
@@ -37,7 +40,7 @@ class HSpicePy(object):
     It is designed to be used with the HSpicePy.py script.
     """
 
-    def __init__(self, path :str,file_name : str,design_file_name : str,timeout :int , save_output : bool = True):
+    def __init__(self, path :str,file_name : str,design_file_name : str,timeout :int , save_output : bool = True,loop=None):
         """
         Initializes the HSpicePy class.
         path -> path of the .sp file
@@ -53,9 +56,12 @@ class HSpicePy(object):
         self.parameters = None
         self.instructions = []
         self.save_output = save_output
+        self.max_error = 50
+        self.runner = False
         self.__mt0_result = None
         self.__result = None
         self.__operation_point_result = None
+        self.loop = loop
     
     
     def set_parameters(self,**kwargs):
@@ -74,10 +80,23 @@ class HSpicePy(object):
         
         TODO line ve alt satırlı
         """
-        with open(f"{self.path}/{self.design_file_name}.cir","r") as file:
-            data = file.read()
-            params = re.findall(r'(?P<key>\w+)\s*=\s*(?P<value>[^ |\n]*)',data)
-            file.close()
+        
+        devamke = True
+        max_error = self.max_error
+        params = None
+        while devamke:
+            try:
+                with open(f"{self.path}/{self.design_file_name}.cir","r") as file:
+                    data = file.read()
+                    params = re.findall(r'(?P<key>\w+)\s*=\s*(?P<value>[^ |\n]*)',data)
+                    file.close()
+                devamke = False
+            except Exception as e:
+                devamke = True
+                max_error -= 1
+                if max_error == 0:
+                    return None
+
         parameters_dict = {}
         for key,value in params:
             parameters_dict[key] = value
@@ -128,15 +147,17 @@ class HSpicePy(object):
     def __get_dp0_log(self):
         
         try:
+            if not self.runner:
+                return
             dp0_log = {}
             file_name = self.file_name + ".dp0"
             tables = None
             variables = []
             devamke = True
-            max_error = 5
+            max_error = self.max_error
             while devamke:
                 try:
-                    with open(f"{self.path}\\out\\{file_name}","r") as dp0:
+                    with open(f"{self.path}\\{file_name}","r") as dp0:
                         # data = dp0.read()
                         tables = dp0.readlines()
                         tables_ = {} 
@@ -194,11 +215,12 @@ class HSpicePy(object):
         res = [7,3,-9]
         """
         try: 
-                
+            if not self.runner:
+                return    
             file_name = self.file_name + ".ma0"
             lines = None
             while not lines:
-                with open(f"{self.path}\\out\\{file_name}","r") as ma0:
+                with open(f"{self.path}\\{file_name}","r") as ma0:
                     # data = ma0.read()
                     
                     lines =  ma0.readlines()
@@ -223,15 +245,21 @@ class HSpicePy(object):
         res = [7,3,-9]
         """
         try: 
-                
+            if not self.runner:
+                return    
             file_name = self.file_name + ".mt0"
             lines = None
+            maks = self.max_error
+            i = 0
             while not lines:
-                with open(f"{self.path}\\out\\{file_name}","r") as mt0:
+                with open(f"{self.path}\\{file_name}","r") as mt0:
                     # data = ma0.read()
                     
                     lines =  mt0.readlines()
                     mt0.close()
+                i+=1
+                if i > maks:
+                    break
             variables = lines[-2]
             results = lines[-1]
             res = {variable:result for variable,result in zip(variables.split(),results.split())}
@@ -242,15 +270,28 @@ class HSpicePy(object):
         except Exception as e:
             print(e)
             self.__mt0_result = None
-
+    async def killer(self,x):
+        await asyncio.sleep(2)
+        x.kill()
     # @timeit
     def run(self):
         try:
             file_name = self.file_name if ".sp" in self.file_name else self.file_name+".sp"
             
             # subprocess.run([r'hspicerf', f"{self.path}\\{file_name}"],cwd=self.path+f"\\out")
-            subprocess.Popen([r'hspicerf', f"{self.path}\\{file_name}"],cwd=self.path+f"\\out",shell=False)
+            path = self.path.replace("\\","/")
+            cwd = path+f"/out"
+            cmd = shlex.split(f"start/min/wait hspicerf {path}/{file_name}")
+            # p = subprocess.call(cmd,cwd=cwd,shell=True)
+            process = None
+            
+            process=Popen(cmd,shell=True, stdout=PIPE, stderr=PIPE, cwd=self.path+f"\\out")
+            stdout, stderr = process.communicate()
+            time.sleep(1)
+            process.kill()
+
             # os.system(f"hspicerf -ahv {self.path}//{file_name} {self.path}//output")   ,f" > "
+            # print(stdout,  "___" ,stderr)
             self.__get_ma0_log()
             self.__get_dp0_log()
             self.__get_mt0_log()
@@ -276,7 +317,7 @@ class HSpicePy(object):
             # # await proc.terminate()
             # except asyncio.TimeoutError:
             #     await proc.kill()
-            proc = await asyncio.create_subprocess_shell(f"hspicerf {self.path}\\{file_name}", cwd=self.path+f"\\out")    
+            proc = await asyncio.create_subprocess_shell(f"start/min/wait hspicerf {self.path}\\{file_name}", cwd=self.path+f"\\out")    
             self.__get_ma0_log()
             self.__get_dp0_log()
             self.__get_mt0_log()
